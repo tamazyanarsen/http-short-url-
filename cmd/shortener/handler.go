@@ -8,8 +8,8 @@ import (
 
 func MainHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodGet {
-		shortUrl := strings.Split(r.URL.Path, "/")[1]
-		println(shortUrl)
+		shortURL := strings.Split(r.URL.Path, "/")[1]
+		println(shortURL)
 
 		w.Header().Add("content-type", "text/plain")
 		w.Header().Add("Location", "sdfsdfdsf")
@@ -26,5 +26,4 @@ func MainHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	http.Error(w, "now allowed method", http.StatusMethodNotAllowed)
-	return
 }
