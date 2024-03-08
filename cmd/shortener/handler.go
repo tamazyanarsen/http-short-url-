@@ -13,7 +13,7 @@ func MainHandler(w http.ResponseWriter, r *http.Request) {
 
 		w.Header().Add("content-type", "text/plain")
 		w.Header().Add("Location", "sdfsdfdsf")
-		w.WriteHeader(301)
+		w.WriteHeader(307)
 		w.Write([]byte(""))
 		return
 	}
