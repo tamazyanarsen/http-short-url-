@@ -12,7 +12,6 @@ func MainHandler(w http.ResponseWriter, r *http.Request) {
 		w.Header().Add("content-type", "text/plain")
 		w.Header().Add("Location", shortURL)
 		w.WriteHeader(307)
-		w.Write([]byte(""))
 		return
 	}
 	if r.Method == http.MethodPost {
@@ -23,5 +22,5 @@ func MainHandler(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("test-short-url"))
 		return
 	}
-	http.Error(w, "now allowed method", http.StatusMethodNotAllowed)
+	http.Error(w, "not allowed method", http.StatusMethodNotAllowed)
 }
