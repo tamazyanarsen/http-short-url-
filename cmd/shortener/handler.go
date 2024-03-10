@@ -1,18 +1,18 @@
 package main
 
 import (
+	"github.com/go-chi/chi"
 	"io"
 	"net/http"
-
-	"github.com/go-chi/chi"
 )
 
 func MainHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodGet {
 		shortURL := chi.URLParam(r, "short")
+		println("shorturl", shortURL)
 		w.Header().Add("content-type", "text/plain")
 		w.Header().Add("Location", shortURL)
-		w.WriteHeader(307)
+		w.WriteHeader(http.StatusTemporaryRedirect)
 		w.Write([]byte(""))
 		return
 	}
@@ -20,7 +20,7 @@ func MainHandler(w http.ResponseWriter, r *http.Request) {
 		body, err := io.ReadAll(r.Body)
 		println(string(body), err)
 		w.Header().Add("content-type", "text/plain")
-		w.WriteHeader(201)
+		w.WriteHeader(http.StatusCreated)
 		w.Write([]byte("test-short-url"))
 		return
 	}
