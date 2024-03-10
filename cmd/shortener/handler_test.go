@@ -26,20 +26,19 @@ func TestHandler(t *testing.T) {
 		name string
 		args args
 	}{
-		// TODO: Add test cases.
-		{name: "get test", args: args{
-			method:       http.MethodGet,
-			url:          "/test",
-			body:         nil,
-			want:         "test",
-			expectedCode: http.StatusTemporaryRedirect,
-		}},
 		{name: "post test", args: args{
 			method:       http.MethodPost,
 			url:          "/",
 			body:         bytes.NewReader([]byte("some text")),
 			want:         "test-short-url",
 			expectedCode: http.StatusCreated,
+		}},
+		{name: "get test", args: args{
+			method:       http.MethodGet,
+			url:          "/test",
+			body:         nil,
+			want:         "test",
+			expectedCode: http.StatusTemporaryRedirect,
 		}},
 	}
 	r := chi.NewRouter()
