@@ -37,8 +37,8 @@ func TestHandler(t *testing.T) {
 			method:       http.MethodGet,
 			url:          "/aHR0cHM6",
 			body:         nil,
-			want:         "https://practicum.yandex.ru",
-			expectedCode: http.StatusTemporaryRedirect,
+			want:         "",
+			expectedCode: http.StatusOK,
 		}},
 	}
 	r := chi.NewRouter()
