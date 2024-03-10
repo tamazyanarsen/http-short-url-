@@ -29,15 +29,15 @@ func TestHandler(t *testing.T) {
 		{name: "post test", args: args{
 			method:       http.MethodPost,
 			url:          "/",
-			body:         bytes.NewReader([]byte("some text")),
-			want:         "test-short-url",
+			body:         bytes.NewReader([]byte("https://practicum.yandex.ru")),
+			want:         "http://localhost:8080/aHR0cHM6",
 			expectedCode: http.StatusCreated,
 		}},
 		{name: "get test", args: args{
 			method:       http.MethodGet,
-			url:          "/test",
+			url:          "/aHR0cHM6",
 			body:         nil,
-			want:         "test",
+			want:         "https://practicum.yandex.ru",
 			expectedCode: http.StatusTemporaryRedirect,
 		}},
 	}
