@@ -21,18 +21,17 @@ func TestMainHandler(t *testing.T) {
 		name string
 		args args
 	}{
-		// TODO: Add test cases.
-		{name: "get test", args: args{
-			w:            httptest.NewRecorder(),
-			r:            httptest.NewRequest(http.MethodGet, "/aHR0cHM6", nil),
-			want:         "https://practicum.yandex.ru/",
-			expectedCode: http.StatusTemporaryRedirect,
-		}},
 		{name: "post test", args: args{
 			w:            httptest.NewRecorder(),
 			r:            httptest.NewRequest(http.MethodPost, "/", bytes.NewReader([]byte("https://practicum.yandex.ru/"))),
 			want:         "http://localhost:8080/aHR0cHM6",
 			expectedCode: http.StatusCreated,
+		}},
+		{name: "get test", args: args{
+			w:            httptest.NewRecorder(),
+			r:            httptest.NewRequest(http.MethodGet, "/aHR0cHM6", nil),
+			want:         "https://practicum.yandex.ru/",
+			expectedCode: http.StatusTemporaryRedirect,
 		}},
 	}
 	for _, tt := range tests {
