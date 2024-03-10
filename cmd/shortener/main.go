@@ -7,7 +7,7 @@ import (
 
 func main() {
 	r := chi.NewRouter()
-	r.Get("/{someText}", MainHandler)
+	r.Get("/{short}", MainHandler)
 	r.Post("/", MainHandler)
 	http.ListenAndServe(":8080", r)
 }

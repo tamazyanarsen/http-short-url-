@@ -9,7 +9,7 @@ import (
 
 func MainHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodGet {
-		shortURL := chi.URLParam(r, "date")
+		shortURL := chi.URLParam(r, "short")
 		w.Header().Add("content-type", "text/plain")
 		w.Header().Add("Location", shortURL)
 		w.WriteHeader(307)
