@@ -56,6 +56,7 @@ func TestHandler(t *testing.T) {
 			client.SetBody(tt.args.body)
 			res, err := client.Send()
 			if err != nil {
+				t.Fatal("req err")
 			}
 			println(res.StatusCode(), res.Header().Get("Location"))
 
