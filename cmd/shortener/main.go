@@ -1,14 +1,13 @@
 package main
 
 import (
+	"github.com/go-chi/chi/v5"
 	"net/http"
 )
 
 func main() {
-	mux := http.NewServeMux()
-	mux.HandleFunc("/", MainHandler)
-	err := http.ListenAndServe(":8080", mux)
-	if err != nil {
-		panic(err)
-	}
+	r := chi.NewRouter()
+	r.Get("/{someText}", MainHandler)
+	r.Post("/", MainHandler)
+	http.ListenAndServe(":8080", r)
 }

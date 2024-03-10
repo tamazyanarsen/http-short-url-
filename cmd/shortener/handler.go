@@ -3,12 +3,13 @@ package main
 import (
 	"io"
 	"net/http"
-	"strings"
+
+	"github.com/go-chi/chi"
 )
 
 func MainHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodGet {
-		shortURL := strings.Split(r.URL.Path, "/")[1]
+		shortURL := chi.URLParam(r, "date")
 		w.Header().Add("content-type", "text/plain")
 		w.Header().Add("Location", shortURL)
 		w.WriteHeader(307)
