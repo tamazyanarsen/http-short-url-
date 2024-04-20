@@ -29,7 +29,11 @@ func MainHandler(w http.ResponseWriter, r *http.Request) {
 		shortURL := regexp.MustCompile(`[^a-zA-Z0-9 ]+`).ReplaceAllString(short, "")
 		urls[shortURL] = string(body)
 		println("save", shortURL, "to map; result:", urls[shortURL])
-		w.Write([]byte(*config.Config["b"] + shortURL))
+		addr := *config.Config["b"]
+		if addr[len(addr)-1:] != "/" {
+			addr += "/"
+		}
+		w.Write([]byte(addr + shortURL))
 	default:
 		http.Error(w, "not allowed method", http.StatusMethodNotAllowed)
 	}
