@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/base64"
 	"github.com/go-chi/chi"
+	"http-short-url/cmd/shortener/config"
 	"io"
 	"net/http"
 	"regexp"
@@ -28,7 +29,7 @@ func MainHandler(w http.ResponseWriter, r *http.Request) {
 		shortURL := regexp.MustCompile(`[^a-zA-Z0-9 ]+`).ReplaceAllString(short, "")
 		urls[shortURL] = string(body)
 		println("save", shortURL, "to map; result:", urls[shortURL])
-		w.Write([]byte("http://localhost:8080/" + shortURL))
+		w.Write([]byte(*config.Config["b"] + shortURL))
 	default:
 		http.Error(w, "not allowed method", http.StatusMethodNotAllowed)
 	}
