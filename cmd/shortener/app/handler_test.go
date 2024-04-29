@@ -44,7 +44,7 @@ func TestHandler(t *testing.T) {
 	}
 	r := chi.NewRouter()
 	r.Get("/{short}", GetShort)
-	r.Post("/", PostUrl)
+	r.Post("/", PostURL)
 
 	ts := httptest.NewServer(r)
 	defer ts.Close()

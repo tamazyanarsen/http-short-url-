@@ -26,7 +26,7 @@ func GetShort(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func PostUrl(w http.ResponseWriter, r *http.Request) {
+func PostURL(w http.ResponseWriter, r *http.Request) {
 	body, err := io.ReadAll(r.Body)
 	println(string(body), err)
 	w.Header().Add("content-type", "text/plain")
