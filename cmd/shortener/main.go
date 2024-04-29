@@ -15,6 +15,6 @@ func main() {
 	r.Post("/", MainHandler)
 	err := http.ListenAndServe(*config.Config["a"], r)
 	if err != nil {
-		return
+		log.Fatal(err)
 	}
 }
