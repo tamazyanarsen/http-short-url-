@@ -4,6 +4,7 @@ import (
 	"flag"
 	"http-short-url/cmd/shortener/app"
 	"http-short-url/cmd/shortener/config"
+	"log"
 	"net/http"
 
 	"github.com/go-chi/chi"
