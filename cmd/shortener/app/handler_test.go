@@ -1,15 +1,16 @@
-package main
+package app
 
 import (
 	"bytes"
-	"github.com/go-chi/chi"
-	"github.com/go-resty/resty/v2"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/go-chi/chi"
+	"github.com/go-resty/resty/v2"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 type args struct {
@@ -42,8 +43,8 @@ func TestHandler(t *testing.T) {
 		}},
 	}
 	r := chi.NewRouter()
-	r.Get("/{short}", MainHandler)
-	r.Post("/", MainHandler)
+	r.Get("/{short}", GetShort)
+	r.Post("/", PostUrl)
 
 	ts := httptest.NewServer(r)
 	defer ts.Close()
