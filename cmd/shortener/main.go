@@ -14,8 +14,10 @@ func main() {
 	flag.Parse()
 	println(*config.Config["a"], *config.Config["b"])
 	r := chi.NewRouter()
-	r.Get("/{short}", app.GetShort)
-	r.Post("/", app.PostURL)
+	r.Get("/{short}", app.WithLog(app.GetShort))
+	// r.Get("/{short}", app.GetShort)
+	// r.Post("/", app.PostURL)
+	r.Post("/", app.WithLog(app.PostURL))
 	err := http.ListenAndServe(*config.Config["a"], r)
 	if err != nil {
 		log.Fatal(err)
