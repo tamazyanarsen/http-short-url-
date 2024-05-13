@@ -1,21 +1,19 @@
-package app
+package handler
 
 import (
 	"encoding/base64"
 	"http-short-url/cmd/shortener/config"
+	"http-short-url/cmd/shortener/data"
 	"io"
 	"net/http"
 	"regexp"
-	"sync"
 	"time"
 
 	"github.com/go-chi/chi"
 	"go.uber.org/zap"
 )
 
-// var urls = make(map[string]string)
-
-var urlStore sync.Map
+var urlStore data.Store
 
 var sugarLogger zap.SugaredLogger
 
@@ -25,6 +23,7 @@ func init() {
 	if logger, err := zap.NewDevelopment(); err == nil {
 		sugarLogger = *logger.Sugar()
 	}
+	urlStore = new(data.URLStore)
 }
 
 type responseInfo struct {
@@ -58,10 +57,10 @@ func WithLog(handler http.HandlerFunc) http.HandlerFunc {
 func GetShort(w http.ResponseWriter, r *http.Request) {
 	shortURL := chi.URLParam(r, "short")
 	// println("shorturl", shortURL, len(urls), urls[shortURL])
-	url, ok := urlStore.Load(regexp.MustCompile(`[^a-zA-Z0-9 ]+`).ReplaceAllString(shortURL, ""))
+	url, ok := urlStore.Read(regexp.MustCompile(`[^a-zA-Z0-9 ]+`).ReplaceAllString(shortURL, ""))
 	if ok {
 		w.Header().Add("content-type", "text/plain")
-		w.Header().Add("Location", url.(string))
+		w.Header().Add("Location", url)
 		w.WriteHeader(http.StatusTemporaryRedirect)
 	} else {
 		w.Header().Add("content-type", "text/plain")
@@ -77,7 +76,7 @@ func PostURL(w http.ResponseWriter, r *http.Request) {
 	short := base64.StdEncoding.EncodeToString(body)[:8]
 	shortURL := regexp.MustCompile(`[^a-zA-Z0-9 ]+`).ReplaceAllString(short, "")
 	// urls[shortURL] = string(body)
-	urlStore.Store(shortURL, string(body))
+	urlStore.Write(shortURL, string(body))
 	// println("save", shortURL, "to map; result:", urls[shortURL])
 	addr := *config.Config["b"]
 	if addr[len(addr)-1:] != "/" {
