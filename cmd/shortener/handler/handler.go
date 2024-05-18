@@ -67,6 +67,7 @@ func (w gzipWriter) Write(b []byte) (int, error) {
 		!strings.Contains(w.ResponseWriter.Header().Get("Content-Type"), "text/html") {
 		return w.ResponseWriter.Write(b)
 	}
+	w.Header().Set("Content-Encoding", "gzip")
 	return w.Writer.Write(b)
 }
 
@@ -93,9 +94,6 @@ func GzipHandler(next http.HandlerFunc) http.HandlerFunc {
 			return
 		}
 		defer gz.Close()
-
-		w.Header().Set("Content-Encoding", "gzip")
-		println("gzip working")
 		next(gzipWriter{ResponseWriter: w, Writer: gz}, r)
 	})
 }
