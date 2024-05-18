@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/base64"
+	"encoding/json"
 	"http-short-url/cmd/shortener/config"
 	"http-short-url/cmd/shortener/data"
 	"io"
@@ -73,14 +74,43 @@ func PostURL(w http.ResponseWriter, r *http.Request) {
 	println(string(body), err)
 	w.Header().Add("content-type", "text/plain")
 	w.WriteHeader(http.StatusCreated)
-	short := base64.StdEncoding.EncodeToString(body)[:8]
+	shortURL, addr := shortName(body)
+	w.Write([]byte(addr + shortURL))
+}
+
+func shortName(originalURL []byte) (string, string) {
+	short := base64.StdEncoding.EncodeToString(originalURL)[:8]
 	shortURL := regexp.MustCompile(`[^a-zA-Z0-9 ]+`).ReplaceAllString(short, "")
-	// urls[shortURL] = string(body)
-	urlStore.Write(shortURL, string(body))
-	// println("save", shortURL, "to map; result:", urls[shortURL])
+	urlStore.Write(shortURL, string(originalURL))
 	addr := *config.Config["b"]
 	if addr[len(addr)-1:] != "/" {
 		addr += "/"
 	}
-	w.Write([]byte(addr + shortURL))
+	return shortURL, addr
+}
+
+func PostJSON(w http.ResponseWriter, r *http.Request) {
+	var body struct {
+		Url string `json:"url"`
+	}
+	var resp struct {
+		Result string `json:"result"`
+	}
+	if reqBody, err := io.ReadAll(r.Body); err == nil {
+		if err := json.Unmarshal(reqBody, &body); err == nil {
+			shortURL, addr := shortName([]byte(body.Url))
+			resp.Result = addr + shortURL
+			if response, err := json.Marshal(resp); err == nil {
+				w.Header().Add("content-type", "application/json")
+				w.WriteHeader(http.StatusCreated)
+				w.Write(response)
+			} else {
+				println(err.Error())
+			}
+		} else {
+			println(err.Error())
+		}
+	} else {
+		println(err.Error())
+	}
 }

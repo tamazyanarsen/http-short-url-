@@ -34,6 +34,13 @@ func TestHandler(t *testing.T) {
 			want:         "http://localhost:8080/aHR0cHM6",
 			expectedCode: http.StatusCreated,
 		}},
+		{name: "post json test", args: args{
+			method:       http.MethodPost,
+			url:          "/api/shorten",
+			body:         bytes.NewReader([]byte("{\"url\": \"https://practicum.yandex.ru\"}")),
+			want:         "{\"result\":\"http://localhost:8080/aHR0cHM6\"}",
+			expectedCode: http.StatusCreated,
+		}},
 		{name: "get test", args: args{
 			method:       http.MethodGet,
 			url:          "/aHR0cHM6",
@@ -45,6 +52,7 @@ func TestHandler(t *testing.T) {
 	r := chi.NewRouter()
 	r.Get("/{short}", GetShort)
 	r.Post("/", PostURL)
+	r.Post("/api/shorten", PostJSON)
 
 	ts := httptest.NewServer(r)
 	defer ts.Close()

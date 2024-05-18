@@ -15,9 +15,8 @@ func main() {
 	println(*config.Config["a"], *config.Config["b"])
 	r := chi.NewRouter()
 	r.Get("/{short}", handler.WithLog(handler.GetShort))
-	// r.Get("/{short}", handler.GetShort)
-	// r.Post("/", handler.PostURL)
 	r.Post("/", handler.WithLog(handler.PostURL))
+	r.Post("/api/shorten", handler.WithLog(handler.PostJSON))
 	err := http.ListenAndServe(*config.Config["a"], r)
 	if err != nil {
 		log.Fatal(err)
