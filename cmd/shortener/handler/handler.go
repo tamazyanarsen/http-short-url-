@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"compress/gzip"
 	"encoding/base64"
 	"encoding/json"
 	"http-short-url/cmd/shortener/config"
@@ -8,6 +9,7 @@ import (
 	"io"
 	"net/http"
 	"regexp"
+	"strings"
 	"time"
 
 	"github.com/go-chi/chi"
@@ -55,6 +57,49 @@ func WithLog(handler http.HandlerFunc) http.HandlerFunc {
 	})
 }
 
+type gzipWriter struct {
+	http.ResponseWriter
+	Writer io.Writer
+}
+
+func (w gzipWriter) Write(b []byte) (int, error) {
+	if !strings.Contains(w.ResponseWriter.Header().Get("Content-Type"), "application/json") ||
+		!strings.Contains(w.ResponseWriter.Header().Get("Content-Type"), "text/html") {
+		return w.ResponseWriter.Write(b)
+	}
+	return w.Writer.Write(b)
+}
+
+func GzipHandler(next http.HandlerFunc) http.HandlerFunc {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if !strings.Contains(r.Header.Get("Accept-Encoding"), "gzip") {
+			next(w, r)
+			return
+		}
+
+		if strings.Contains(r.Header.Get("Content-Encoding"), "gzip") {
+			gz, err := gzip.NewReader(r.Body)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+			defer gz.Close()
+			r.Body = gz
+		}
+
+		gz, err := gzip.NewWriterLevel(w, gzip.BestSpeed)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		defer gz.Close()
+
+		w.Header().Set("Content-Encoding", "gzip")
+		println("gzip working")
+		next(gzipWriter{ResponseWriter: w, Writer: gz}, r)
+	})
+}
+
 func GetShort(w http.ResponseWriter, r *http.Request) {
 	shortURL := chi.URLParam(r, "short")
 	// println("shorturl", shortURL, len(urls), urls[shortURL])
@@ -91,14 +136,14 @@ func shortName(originalURL []byte) (string, string) {
 
 func PostJSON(w http.ResponseWriter, r *http.Request) {
 	var body struct {
-		Url string `json:"url"`
+		URL string `json:"url"`
 	}
 	var resp struct {
 		Result string `json:"result"`
 	}
 	if reqBody, err := io.ReadAll(r.Body); err == nil {
 		if err := json.Unmarshal(reqBody, &body); err == nil {
-			shortURL, addr := shortName([]byte(body.Url))
+			shortURL, addr := shortName([]byte(body.URL))
 			resp.Result = addr + shortURL
 			if response, err := json.Marshal(resp); err == nil {
 				w.Header().Add("content-type", "application/json")
