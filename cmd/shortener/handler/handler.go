@@ -63,8 +63,8 @@ type gzipWriter struct {
 }
 
 func (w *gzipWriter) Write(b []byte) (int, error) {
-	if !(strings.Contains(w.ResponseWriter.Header().Get("Content-Type"), "application/json") ||
-		strings.Contains(w.ResponseWriter.Header().Get("Content-Type"), "text/html")) {
+	if !(strings.Contains(w.Header().Get("Content-Type"), "application/json") ||
+		strings.Contains(w.Header().Get("Content-Type"), "text/html")) {
 		println("Обычный ответ через ResponseWriter")
 		return w.ResponseWriter.Write(b)
 	}
@@ -95,7 +95,7 @@ func GzipHandler(next http.HandlerFunc) http.HandlerFunc {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		//defer gz.Close()
+		defer gz.Close()
 		next(&gzipWriter{ResponseWriter: w, Writer: gz}, r)
 		//next(w, r)
 	})
