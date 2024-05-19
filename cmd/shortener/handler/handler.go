@@ -62,14 +62,23 @@ type gzipWriter struct {
 	Writer *gzip.Writer
 }
 
+func newGzipWriter(w http.ResponseWriter) *gzipWriter {
+	sugarLogger.Infoln("new gzipWriter")
+	return &gzipWriter{
+		ResponseWriter: w,
+		Writer:         gzip.NewWriter(w),
+	}
+}
+
 func (w *gzipWriter) Write(b []byte) (int, error) {
 	if !(strings.Contains(w.Header().Get("Content-Type"), "application/json") ||
 		strings.Contains(w.Header().Get("Content-Type"), "text/html")) {
-		println("Обычный ответ через ResponseWriter")
+		sugarLogger.Infoln("call ResponseWriter:", string(b))
 		return w.ResponseWriter.Write(b)
 	}
-	println("Ответ через gzipWriter")
+	sugarLogger.Infoln("call gzip write:", string(b))
 	w.Header().Set("Content-Encoding", "gzip")
+	defer w.Writer.Close()
 	return w.Writer.Write(b)
 }
 
@@ -90,13 +99,7 @@ func GzipHandler(next http.HandlerFunc) http.HandlerFunc {
 			r.Body = gz
 		}
 
-		gz, err := gzip.NewWriterLevel(w, gzip.BestSpeed)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		defer gz.Close()
-		next(&gzipWriter{ResponseWriter: w, Writer: gz}, r)
+		next(newGzipWriter(w), r)
 		//next(w, r)
 	})
 }
