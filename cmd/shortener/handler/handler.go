@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"bytes"
 	"compress/gzip"
 	"encoding/base64"
 	"encoding/json"
@@ -71,6 +72,12 @@ func newGzipWriter(w http.ResponseWriter) *gzipWriter {
 }
 
 func (w *gzipWriter) Write(b []byte) (int, error) {
+	var buf bytes.Buffer
+	wr := gzip.NewWriter(&buf)
+	wr.Write(b)
+	wr.Flush()
+	sugarLogger.Infoln("gzipWriter:", buf.String())
+
 	if !(strings.Contains(w.Header().Get("Content-Type"), "application/json") ||
 		strings.Contains(w.Header().Get("Content-Type"), "text/html")) {
 		sugarLogger.Infoln("call ResponseWriter:", string(b))
@@ -78,7 +85,7 @@ func (w *gzipWriter) Write(b []byte) (int, error) {
 	}
 	sugarLogger.Infoln("call gzip write:", string(b))
 	w.Header().Set("Content-Encoding", "gzip")
-	defer w.Writer.Close()
+	defer w.Writer.Flush()
 	return w.Writer.Write(b)
 }
 
