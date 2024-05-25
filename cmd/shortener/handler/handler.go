@@ -79,6 +79,7 @@ func (w *gzipWriter) Write(b []byte) (int, error) {
 	}
 	sugarLogger.Infoln("call gzip write:", string(b))
 	w.Header().Set("Content-Encoding", "gzip")
+	w.Header().Set("Accept-Encoding", "gzip")
 	defer w.Writer.Close()
 	return w.Writer.Write(b)
 }
