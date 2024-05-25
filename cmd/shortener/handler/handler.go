@@ -81,6 +81,7 @@ func (w *gzipWriter) Write(b []byte) (int, error) {
 	// 		sugarLogger.Infoln("test READ gzipWriter:", string(readData))
 	// 	}
 	// }
+	sugarLogger.Infoln("response Content-Type", w.Header().Get("Content-Type"))
 	if !(strings.Contains(w.Header().Get("Content-Type"), "application/json") ||
 		strings.Contains(w.Header().Get("Content-Type"), "text/html")) {
 		sugarLogger.Infoln("call ResponseWriter:", string(b))
@@ -153,6 +154,7 @@ func shortName(originalURL []byte) (string, string) {
 }
 
 func PostJSON(w http.ResponseWriter, r *http.Request) {
+	sugarLogger.Info("call PostJSON")
 	var body struct {
 		URL string `json:"url"`
 	}
@@ -164,7 +166,8 @@ func PostJSON(w http.ResponseWriter, r *http.Request) {
 			shortURL, addr := shortName([]byte(body.URL))
 			resp.Result = addr + shortURL
 			if response, err := json.Marshal(resp); err == nil {
-				w.Header().Add("content-type", "application/json")
+				w.Header().Set("Content-Type", "application/json")
+				sugarLogger.Infoln("response Content-Type", w.Header().Get("Content-Type"))
 				w.WriteHeader(http.StatusCreated)
 				w.Write(response)
 			} else {
