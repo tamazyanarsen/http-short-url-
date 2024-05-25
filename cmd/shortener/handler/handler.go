@@ -71,6 +71,7 @@ func newGzipWriter(w http.ResponseWriter) *gzipWriter {
 }
 
 func (w *gzipWriter) Write(b []byte) (int, error) {
+	sugarLogger.Infoln(string(b), strings.TrimSuffix(string(b), "\n"))
 	sugarLogger.Infoln("response Content-Type", w.Header().Get("Content-Type"))
 	if !(strings.Contains(w.Header().Get("Content-Type"), "application/json") ||
 		strings.Contains(w.Header().Get("Content-Type"), "text/html")) {
@@ -80,7 +81,7 @@ func (w *gzipWriter) Write(b []byte) (int, error) {
 	sugarLogger.Infoln("call gzip write:", string(b))
 	w.Header().Set("Content-Encoding", "gzip")
 	w.Header().Set("Accept-Encoding", "gzip")
-	return w.Writer.Write(b)
+	return w.Writer.Write([]byte(strings.TrimSuffix(string(b), "\n")))
 }
 
 func GzipHandler(next http.HandlerFunc) http.HandlerFunc {
@@ -161,18 +162,23 @@ func PostJSON(w http.ResponseWriter, r *http.Request) {
 			sugarLogger.Infoln("body.URL", body.URL)
 			shortURL, addr := shortName([]byte(body.URL))
 			resp.Result = addr + shortURL
-			if response, err := json.Marshal(resp); err == nil {
-				w.Header().Set("Content-Type", "application/json")
-				w.WriteHeader(http.StatusCreated)
-				write, err := w.Write(response)
-				if err != nil {
-					println(err.Error())
-				} else {
-					println("write:", write)
-				}
-			} else {
-				println(err.Error())
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusCreated)
+			if err := json.NewEncoder(w).Encode(resp); err != nil {
+				return
 			}
+			//if response, err := json.Marshal(resp); err == nil {
+			//	w.Header().Set("Content-Type", "application/json")
+			//	w.WriteHeader(http.StatusCreated)
+			//	write, err := w.Write([]byte(strings.TrimSuffix(string(response), "\n")))
+			//	if err != nil {
+			//		println(err.Error())
+			//	} else {
+			//		println("write:", write)
+			//	}
+			//} else {
+			//	println(err.Error())
+			//}
 		} else {
 			println(err.Error())
 		}
