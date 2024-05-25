@@ -153,12 +153,13 @@ func PostJSON(w http.ResponseWriter, r *http.Request) {
 		Result string `json:"result"`
 	}
 	if reqBody, err := io.ReadAll(r.Body); err == nil {
+		sugarLogger.Infoln("reqBody:", string(reqBody))
 		if err := json.Unmarshal(reqBody, &body); err == nil {
+			sugarLogger.Infoln("body.URL", body.URL)
 			shortURL, addr := shortName([]byte(body.URL))
 			resp.Result = addr + shortURL
 			if response, err := json.Marshal(resp); err == nil {
 				w.Header().Set("Content-Type", "application/json")
-				sugarLogger.Infoln("response Content-Type", w.Header().Get("Content-Type"))
 				w.WriteHeader(http.StatusCreated)
 				write, err := w.Write(response)
 				if err != nil {
