@@ -173,6 +173,6 @@ func PostJSON(w http.ResponseWriter, r *http.Request) {
 			println(err.Error())
 		}
 	} else {
-		println(err.Error())
+		println("ошибка парсинга body, ReadAll", err.Error())
 	}
 }
