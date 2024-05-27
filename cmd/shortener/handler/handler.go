@@ -85,14 +85,10 @@ func GzipHandler(next http.HandlerFunc) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		newHandler := w
 		if strings.Contains(r.Header.Get("Accept-Encoding"), "gzip") {
-			sugarLogger.Infoln("Accept-Encoding NOT contains gzip:", r.Header.Get("Accept-Encoding"))
+			sugarLogger.Infoln("Accept-Encoding contains gzip:", r.Header.Get("Accept-Encoding"))
 			newHandler = newGzipWriter(w)
 			defer newHandler.(*gzipWriter).Writer.Close()
-			//next(w, r)
-			//return
 		}
-
-		sugarLogger.Infoln("Accept-Encoding contains gzip:", r.Header.Get("Accept-Encoding"))
 
 		if strings.Contains(r.Header.Get("Content-Encoding"), "gzip") {
 			sugarLogger.Infoln("request Content-Encoding", r.Header.Get("Content-Encoding"))
