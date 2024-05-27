@@ -79,7 +79,8 @@ func (w *gzipWriter) Write(b []byte) (int, error) {
 	}
 	sugarLogger.Infoln("call gzip write:", string(b))
 	w.Header().Set("Content-Encoding", "gzip")
-	w.Header().Set("Accept-Encoding", "gzip")
+	w.WriteHeader(http.StatusCreated)
+	// w.Header().Set("Accept-Encoding", "gzip")
 	return w.Writer.Write(b)
 }
 
@@ -163,7 +164,6 @@ func PostJSON(w http.ResponseWriter, r *http.Request) {
 			resp.Result = addr + shortURL
 			if response, err := json.Marshal(resp); err == nil {
 				w.Header().Set("Content-Type", "application/json")
-				w.WriteHeader(http.StatusCreated)
 				write, err := w.Write([]byte(strings.TrimSuffix(string(response), "\n")))
 				if err != nil {
 					println(err.Error())
