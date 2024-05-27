@@ -52,7 +52,7 @@ func TestHandler(t *testing.T) {
 	r := chi.NewRouter()
 	r.Get("/{short}", GetShort)
 	r.Post("/", PostURL)
-	r.Post("/api/shorten", PostJSON)
+	r.Post("/api/shorten", GzipHandler(PostJSON))
 
 	ts := httptest.NewServer(r)
 	defer ts.Close()
