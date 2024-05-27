@@ -75,6 +75,7 @@ func (w *gzipWriter) Write(b []byte) (int, error) {
 	if !(strings.Contains(w.Header().Get("Content-Type"), "application/json") ||
 		strings.Contains(w.Header().Get("Content-Type"), "text/html")) {
 		sugarLogger.Infoln("call ResponseWriter:", string(b))
+		w.WriteHeader(http.StatusCreated)
 		return w.ResponseWriter.Write(b)
 	}
 	sugarLogger.Infoln("call gzip write:", string(b))
