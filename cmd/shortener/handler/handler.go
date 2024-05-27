@@ -110,6 +110,7 @@ func GetShort(w http.ResponseWriter, r *http.Request) {
 	shortURL := chi.URLParam(r, "short")
 	// println("shorturl", shortURL, len(urls), urls[shortURL])
 	url, ok := urlStore.Read(regexp.MustCompile(`[^a-zA-Z0-9 ]+`).ReplaceAllString(shortURL, ""))
+	sugarLogger.Infoln("original url from store to header.Location", url)
 	if ok {
 		w.Header().Add("content-type", "text/plain")
 		w.Header().Add("Location", url)
