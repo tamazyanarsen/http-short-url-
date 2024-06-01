@@ -78,6 +78,7 @@ func (w *gzipWriter) Write(b []byte) (int, error) {
 		return w.ResponseWriter.Write(b)
 	}
 	sugarLogger.Infoln("call gzip write:", string(b))
+	defer w.Writer.Close()
 	return w.Writer.Write(b)
 }
 
@@ -87,7 +88,7 @@ func GzipHandler(next http.HandlerFunc) http.HandlerFunc {
 		if strings.Contains(r.Header.Get("Accept-Encoding"), "gzip") {
 			sugarLogger.Infoln("Accept-Encoding contains gzip:", r.Header.Get("Accept-Encoding"))
 			newHandler = newGzipWriter(w)
-			defer newHandler.(*gzipWriter).Writer.Close()
+			// defer newHandler.(*gzipWriter).Writer.Close()
 		}
 
 		if strings.Contains(r.Header.Get("Content-Encoding"), "gzip") {
@@ -107,6 +108,7 @@ func GzipHandler(next http.HandlerFunc) http.HandlerFunc {
 }
 
 func GetShort(w http.ResponseWriter, r *http.Request) {
+	sugarLogger.Info("START GetShort")
 	shortURL := chi.URLParam(r, "short")
 	// println("shorturl", shortURL, len(urls), urls[shortURL])
 	url, ok := urlStore.Read(regexp.MustCompile(`[^a-zA-Z0-9 ]+`).ReplaceAllString(shortURL, ""))
@@ -122,12 +124,17 @@ func GetShort(w http.ResponseWriter, r *http.Request) {
 }
 
 func PostURL(w http.ResponseWriter, r *http.Request) {
+	sugarLogger.Info("START PostURL")
 	body, err := io.ReadAll(r.Body)
-	println(string(body), err)
-	w.Header().Add("content-type", "text/plain")
+	sugarLogger.Infoln("get body", string(body))
+	if err != nil {
+		sugarLogger.Error(err.Error())
+	}
+	w.Header().Set("Content-Type", "text/plain")
 	w.WriteHeader(http.StatusCreated)
 	shortURL, addr := shortName(body)
-	println("shortURL:", shortURL, "addr:", addr)
+	sugarLogger.Infoln("shortURL", shortURL)
+	sugarLogger.Infoln("addr", addr)
 	w.Write([]byte(addr + shortURL))
 }
 
@@ -143,7 +150,7 @@ func shortName(originalURL []byte) (string, string) {
 }
 
 func PostJSON(w http.ResponseWriter, r *http.Request) {
-	sugarLogger.Info("call PostJSON")
+	sugarLogger.Info("START PostJSON")
 	var body struct {
 		URL string `json:"url"`
 	}
