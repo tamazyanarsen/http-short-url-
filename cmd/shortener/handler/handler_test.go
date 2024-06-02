@@ -1,4 +1,4 @@
-package app
+package handler
 
 import (
 	"bytes"
@@ -28,23 +28,33 @@ func TestHandler(t *testing.T) {
 		args args
 	}{
 		{name: "post test", args: args{
+			method: http.MethodPost,
+			url:    "/",
+			body:   bytes.NewReader([]byte("https://practicum.yandex.ru")),
+			want:   "http://localhost:8080/" + shortURL([]byte("https://practicum.yandex.ru")),
+			// "http://localhost:8080/aHR0cHM6"
+			expectedCode: http.StatusCreated,
+		}},
+		{name: "post json test", args: args{
 			method:       http.MethodPost,
-			url:          "/",
-			body:         bytes.NewReader([]byte("https://practicum.yandex.ru")),
-			want:         "http://localhost:8080/aHR0cHM6",
+			url:          "/api/shorten",
+			body:         bytes.NewReader([]byte("{\"url\": \"https://practicum.yandex.ru\"}")),
+			want:         "{\"result\":\"http://localhost:8080/" + shortURL([]byte("https://practicum.yandex.ru")) + "\"}",
 			expectedCode: http.StatusCreated,
 		}},
 		{name: "get test", args: args{
-			method:       http.MethodGet,
-			url:          "/aHR0cHM6",
+			method: http.MethodGet,
+			url:    "/" + shortURL([]byte("https://practicum.yandex.ru")),
+			// url:          "/aHR0cHM6",
 			body:         nil,
 			want:         "",
 			expectedCode: http.StatusOK,
 		}},
 	}
 	r := chi.NewRouter()
-	r.Get("/{short}", GetShort)
-	r.Post("/", PostURL)
+	r.Get("/{short}", GzipHandler(GetShort))
+	r.Post("/", GzipHandler(PostURL))
+	r.Post("/api/shorten", GzipHandler(PostJSON))
 
 	ts := httptest.NewServer(r)
 	defer ts.Close()
