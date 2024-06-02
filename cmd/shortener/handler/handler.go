@@ -54,6 +54,7 @@ func WithLog(handler http.HandlerFunc) http.HandlerFunc {
 		startRequestTime := time.Now()
 		handler(&responseHandler, r)
 		sugarLogger.Infoln("duration:", time.Since(startRequestTime))
+		sugarLogger.Infoln("\n----------------------------------------------------------\n\n")
 	})
 }
 
@@ -135,6 +136,16 @@ func PostURL(w http.ResponseWriter, r *http.Request) {
 	shortURL, addr := shortName(body)
 	sugarLogger.Infoln("shortURL", shortURL)
 	sugarLogger.Infoln("addr", addr)
+	if prod, err := NewProducer(*config.Config["f"]); err == nil {
+		prod.WriteEvent(&FileData{
+			Uuid:        time.Now().Unix(),
+			ShortURL:    shortURL,
+			OriginalURL: string(body),
+		})
+		defer prod.Close()
+	} else {
+		sugarLogger.Fatalln(err)
+	}
 	w.Write([]byte(addr + shortURL))
 }
 
