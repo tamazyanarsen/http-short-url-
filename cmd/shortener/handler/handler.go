@@ -138,9 +138,13 @@ func PostURL(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(addr + shortURL))
 }
 
+func shortURL(originalURL []byte) string {
+	short := base64.StdEncoding.EncodeToString(originalURL)[:]
+	return regexp.MustCompile(`[^a-zA-Z0-9 ]+`).ReplaceAllString(short, "")
+}
+
 func shortName(originalURL []byte) (string, string) {
-	short := base64.StdEncoding.EncodeToString(originalURL)[:8]
-	shortURL := regexp.MustCompile(`[^a-zA-Z0-9 ]+`).ReplaceAllString(short, "")
+	shortURL := shortURL(originalURL)
 	urlStore.Write(shortURL, string(originalURL))
 	addr := *config.Config["b"]
 	if addr[len(addr)-1:] != "/" {
