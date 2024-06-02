@@ -184,6 +184,16 @@ func PostJSON(w http.ResponseWriter, r *http.Request) {
 					w.Header().Set("Content-Encoding", "gzip")
 				}
 				w.WriteHeader(http.StatusCreated)
+				if prod, err := NewProducer(*config.Config["f"]); err == nil {
+					prod.WriteEvent(&FileData{
+						Uuid:        time.Now().Unix(),
+						ShortURL:    shortURL,
+						OriginalURL: body.URL,
+					})
+					defer prod.Close()
+				} else {
+					sugarLogger.Fatalln(err)
+				}
 				write, err := w.Write([]byte(strings.TrimSuffix(string(response), "\n")))
 				if err != nil {
 					println(err.Error())
