@@ -22,11 +22,24 @@ var sugarLogger zap.SugaredLogger
 
 // var logger, err = zap.NewDevelopment()
 
+func readFile(cons *Consumer) {
+	if data, fileErr := cons.ReadEvent(); fileErr == nil {
+		urlStore.Write(data.ShortURL, data.OriginalURL)
+		readFile(cons)
+	} else {
+		sugarLogger.Infoln(fileErr, "КОНЕЦ ФАЙЛА")
+	}
+}
+
 func init() {
 	if logger, err := zap.NewDevelopment(); err == nil {
 		sugarLogger = *logger.Sugar()
 	}
 	urlStore = new(data.URLStore)
+
+	if cons, err := NewConsumer(*config.Config["f"]); err == nil {
+		readFile(cons)
+	}
 }
 
 type responseInfo struct {
@@ -138,7 +151,7 @@ func PostURL(w http.ResponseWriter, r *http.Request) {
 	sugarLogger.Infoln("addr", addr)
 	if prod, err := NewProducer(*config.Config["f"]); err == nil {
 		prod.WriteEvent(&FileData{
-			Uuid:        time.Now().Unix(),
+			Uuid:        string(time.Now().Unix()),
 			ShortURL:    shortURL,
 			OriginalURL: string(body),
 		})
@@ -186,7 +199,7 @@ func PostJSON(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(http.StatusCreated)
 				if prod, err := NewProducer(*config.Config["f"]); err == nil {
 					prod.WriteEvent(&FileData{
-						Uuid:        time.Now().Unix(),
+						Uuid:        string(time.Now().Unix()),
 						ShortURL:    shortURL,
 						OriginalURL: body.URL,
 					})

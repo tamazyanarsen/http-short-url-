@@ -16,7 +16,7 @@ type Consumer struct {
 }
 
 type FileData struct {
-	Uuid        int64  `json:"uuid"`
+	Uuid        string `json:"uuid"`
 	ShortURL    string `json:"short_url"`
 	OriginalURL string `json:"original_url"`
 }
