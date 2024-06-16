@@ -9,6 +9,7 @@ import (
 	"io"
 	"net/http"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
 
@@ -151,7 +152,7 @@ func PostURL(w http.ResponseWriter, r *http.Request) {
 	sugarLogger.Infoln("addr", addr)
 	if prod, err := NewProducer(*config.Config["f"]); err == nil {
 		prod.WriteEvent(&FileData{
-			Uuid:        string(time.Now().Unix()),
+			Uuid:        strconv.FormatInt(time.Now().Unix(), 10),
 			ShortURL:    shortURL,
 			OriginalURL: string(body),
 		})
@@ -199,7 +200,7 @@ func PostJSON(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(http.StatusCreated)
 				if prod, err := NewProducer(*config.Config["f"]); err == nil {
 					prod.WriteEvent(&FileData{
-						Uuid:        string(time.Now().Unix()),
+						Uuid:        strconv.FormatInt(time.Now().Unix(), 10),
 						ShortURL:    shortURL,
 						OriginalURL: body.URL,
 					})
