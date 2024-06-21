@@ -1,7 +1,6 @@
 package main
 
 import (
-	"flag"
 	"http-short-url/cmd/shortener/config"
 	"http-short-url/cmd/shortener/handler"
 	"log"
@@ -11,12 +10,14 @@ import (
 )
 
 func main() {
-	flag.Parse()
-	println(*config.Config["a"], *config.Config["b"])
+	config.InitConfig()
+	handler.InitHandler()
 	r := chi.NewRouter()
-	r.Get("/{short}", handler.WithLog(handler.GzipHandler(handler.GetShort)))
-	r.Post("/", handler.WithLog(handler.GzipHandler(handler.PostURL)))
-	r.Post("/api/shorten", handler.WithLog(handler.GzipHandler(handler.PostJSON)))
+	r.Use(handler.GzipHandler)
+	r.Use(handler.WithLog)
+	r.Get("/{short}", handler.GetShort)
+	r.Post("/", handler.PostURL)
+	r.Post("/api/shorten", handler.PostJSON)
 	err := http.ListenAndServe(*config.Config["a"], r)
 	if err != nil {
 		log.Fatal(err)

@@ -24,15 +24,17 @@ var sugarLogger zap.SugaredLogger
 // var logger, err = zap.NewDevelopment()
 
 func readFile(cons *Consumer) {
-	if data, fileErr := cons.ReadEvent(); fileErr == nil {
-		urlStore.Write(data.ShortURL, data.OriginalURL)
-		readFile(cons)
-	} else {
+	fileData, fileErr := cons.ReadEvent()
+	if fileErr == nil {
+		sugarLogger.Errorln(fileErr.Error())
 		sugarLogger.Infoln(fileErr, "КОНЕЦ ФАЙЛА")
+		return
 	}
+	urlStore.Write(fileData.ShortURL, fileData.OriginalURL)
+	readFile(cons)
 }
 
-func init() {
+func InitHandler() {
 	if logger, err := zap.NewDevelopment(); err == nil {
 		sugarLogger = *logger.Sugar()
 	}
@@ -57,7 +59,7 @@ func (r *responseInfo) WriteHeader(s int) {
 	r.ResponseWriter.WriteHeader(s)
 }
 
-func WithLog(handler http.HandlerFunc) http.HandlerFunc {
+func WithLog(handler http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		responseHandler := responseInfo{
 			ResponseWriter: w,
@@ -66,7 +68,7 @@ func WithLog(handler http.HandlerFunc) http.HandlerFunc {
 		sugarLogger.Infoln("request method", r.Method)
 
 		startRequestTime := time.Now()
-		handler(&responseHandler, r)
+		handler.ServeHTTP(&responseHandler, r)
 		sugarLogger.Infoln("duration:", time.Since(startRequestTime))
 		sugarLogger.Infoln("\n----------------------------------------------------------\n\n")
 	})
@@ -97,7 +99,7 @@ func (w *gzipWriter) Write(b []byte) (int, error) {
 	return w.Writer.Write(b)
 }
 
-func GzipHandler(next http.HandlerFunc) http.HandlerFunc {
+func GzipHandler(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		newHandler := w
 		if strings.Contains(r.Header.Get("Accept-Encoding"), "gzip") {
@@ -117,7 +119,7 @@ func GzipHandler(next http.HandlerFunc) http.HandlerFunc {
 			r.Body = gz
 		}
 
-		next(newHandler, r)
+		next.ServeHTTP(newHandler, r)
 		//next(w, r)
 	})
 }
@@ -140,27 +142,45 @@ func GetShort(w http.ResponseWriter, r *http.Request) {
 
 func PostURL(w http.ResponseWriter, r *http.Request) {
 	sugarLogger.Info("START PostURL")
-	body, err := io.ReadAll(r.Body)
+	body, bodyErr := io.ReadAll(r.Body)
 	sugarLogger.Infoln("get body", string(body))
-	if err != nil {
-		sugarLogger.Error(err.Error())
+	if bodyErr != nil {
+		handleError(bodyErr, w)
+		return
 	}
 	w.Header().Set("Content-Type", "text/plain")
 	w.WriteHeader(http.StatusCreated)
 	shortURL, addr := shortName(body)
 	sugarLogger.Infoln("shortURL", shortURL)
 	sugarLogger.Infoln("addr", addr)
-	if prod, err := NewProducer(*config.Config["f"]); err == nil {
-		prod.WriteEvent(&FileData{
-			UUID:        strconv.FormatInt(time.Now().Unix(), 10),
-			ShortURL:    shortURL,
-			OriginalURL: string(body),
-		})
-		defer prod.Close()
-	} else {
-		sugarLogger.Fatalln(err)
+	if writeToFile(shortURL, body) {
+		return
 	}
 	w.Write([]byte(addr + shortURL))
+}
+
+func writeToFile(shortURL string, body []byte) bool {
+	prod, prodErr := NewProducer(*config.Config["f"])
+	if prodErr != nil {
+		sugarLogger.Errorln(prodErr.Error())
+		return true
+	}
+	defer prod.Close()
+	writeErr := prod.WriteEvent(&FileData{
+		UUID:        strconv.FormatInt(time.Now().Unix(), 10),
+		ShortURL:    shortURL,
+		OriginalURL: string(body),
+	})
+	if writeErr != nil {
+		sugarLogger.Errorln(writeErr.Error())
+		return true
+	}
+	return false
+}
+
+func handleError(err error, w http.ResponseWriter) {
+	sugarLogger.Errorln(err.Error())
+	w.WriteHeader(http.StatusInternalServerError)
 }
 
 func shortURL(originalURL []byte) string {
@@ -186,41 +206,38 @@ func PostJSON(w http.ResponseWriter, r *http.Request) {
 	var resp struct {
 		Result string `json:"result"`
 	}
-	if reqBody, err := io.ReadAll(r.Body); err == nil {
-		sugarLogger.Infoln("reqBody:", string(reqBody))
-		if err := json.Unmarshal(reqBody, &body); err == nil {
-			sugarLogger.Infoln("body.URL", body.URL)
-			shortURL, addr := shortName([]byte(body.URL))
-			resp.Result = addr + shortURL
-			if response, err := json.Marshal(resp); err == nil {
-				w.Header().Set("Content-Type", "application/json")
-				if strings.Contains(r.Header.Get("Accept-Encoding"), "gzip") {
-					w.Header().Set("Content-Encoding", "gzip")
-				}
-				w.WriteHeader(http.StatusCreated)
-				if prod, err := NewProducer(*config.Config["f"]); err == nil {
-					prod.WriteEvent(&FileData{
-						UUID:        strconv.FormatInt(time.Now().Unix(), 10),
-						ShortURL:    shortURL,
-						OriginalURL: body.URL,
-					})
-					defer prod.Close()
-				} else {
-					sugarLogger.Fatalln(err)
-				}
-				write, err := w.Write([]byte(strings.TrimSuffix(string(response), "\n")))
-				if err != nil {
-					println(err.Error())
-				} else {
-					println("write:", write)
-				}
-			} else {
-				println(err.Error())
-			}
-		} else {
-			println(err.Error())
-		}
-	} else {
-		println("ошибка парсинга body, ReadAll", err.Error())
+
+	reqBody, bodyErr := io.ReadAll(r.Body)
+	if bodyErr != nil {
+		handleError(bodyErr, w)
+		return
+	}
+	sugarLogger.Infoln("reqBody:", string(reqBody))
+
+	if jsonErr := json.Unmarshal(reqBody, &body); jsonErr != nil {
+		handleError(jsonErr, w)
+		return
+	}
+	sugarLogger.Infoln("body.URL", body.URL)
+	shortURL, addr := shortName([]byte(body.URL))
+	resp.Result = addr + shortURL
+
+	response, respErr := json.Marshal(resp)
+	if respErr != nil {
+		handleError(respErr, w)
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if strings.Contains(r.Header.Get("Accept-Encoding"), "gzip") {
+		w.Header().Set("Content-Encoding", "gzip")
+	}
+	w.WriteHeader(http.StatusCreated)
+
+	if writeToFile(shortURL, []byte(body.URL)) {
+		return
+	}
+
+	_, writeErr := w.Write([]byte(strings.TrimSuffix(string(response), "\n")))
+	if writeErr != nil {
+		sugarLogger.Errorln(writeErr.Error())
 	}
 }
