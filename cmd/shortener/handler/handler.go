@@ -24,12 +24,13 @@ var sugarLogger zap.SugaredLogger
 // var logger, err = zap.NewDevelopment()
 
 func readFile(cons *Consumer) {
+	sugarLogger.Infoln("START READ FILE")
 	fileData, fileErr := cons.ReadEvent()
-	if fileErr == nil {
-		sugarLogger.Errorln(fileErr.Error())
+	if fileErr != nil {
 		sugarLogger.Infoln(fileErr, "КОНЕЦ ФАЙЛА")
 		return
 	}
+	sugarLogger.Infoln("WRITE TO STORE", urlStore)
 	urlStore.Write(fileData.ShortURL, fileData.OriginalURL)
 	readFile(cons)
 }
@@ -39,10 +40,15 @@ func InitHandler() {
 		sugarLogger = *logger.Sugar()
 	}
 	urlStore = new(data.URLStore)
+	sugarLogger.Infoln("INIT STORE", urlStore)
 
-	if cons, err := NewConsumer(*config.Config["f"]); err == nil {
-		readFile(cons)
+	cons, consErr := NewConsumer(*config.Config["f"])
+	if consErr != nil {
+		sugarLogger.Errorln(consErr.Error())
+		return
 	}
+	sugarLogger.Infoln("call readFile()")
+	readFile(cons)
 }
 
 type responseInfo struct {

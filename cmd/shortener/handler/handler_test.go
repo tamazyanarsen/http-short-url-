@@ -2,6 +2,7 @@ package handler
 
 import (
 	"bytes"
+	"http-short-url/cmd/shortener/config"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -23,6 +24,8 @@ type args struct {
 }
 
 func TestHandler(t *testing.T) {
+	config.InitConfig()
+	InitHandler()
 	tests := []struct {
 		name string
 		args args
@@ -52,9 +55,10 @@ func TestHandler(t *testing.T) {
 		}},
 	}
 	r := chi.NewRouter()
-	r.Get("/{short}", GzipHandler(GetShort))
-	r.Post("/", GzipHandler(PostURL))
-	r.Post("/api/shorten", GzipHandler(PostJSON))
+	r.Use(GzipHandler)
+	r.Get("/{short}", GetShort)
+	r.Post("/", PostURL)
+	r.Post("/api/shorten", PostJSON)
 
 	ts := httptest.NewServer(r)
 	defer ts.Close()

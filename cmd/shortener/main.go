@@ -12,6 +12,7 @@ import (
 
 func main() {
 	config.InitConfig()
+	println("---------------CONFIG-------------------", *config.Config["a"], *config.Config["b"], *config.Config["f"])
 	flag.Parse()
 	handler.InitHandler()
 	r := chi.NewRouter()

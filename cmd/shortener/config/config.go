@@ -8,6 +8,7 @@ import (
 var Config = make(map[string]*string)
 
 func InitConfig() {
+	os.Setenv("FILE_STORAGE_PATH", "./test.txt")
 	Config["a"] = flag.String("a", "localhost:8080", "адрес запуска HTTP-сервера")
 	Config["b"] = flag.String("b", "http://localhost:8080/", "базовый адрес результирующего сокращённого url")
 	Config["f"] = flag.String("f", "/tmp/short-url-db.json", "полное имя файла, куда сохраняются данные в формате JSON (по умолчанию /tmp/short-url-db.json, пустое значение отключает функцию записи на диск)")
