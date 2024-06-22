@@ -100,7 +100,6 @@ func (w *gzipWriter) Write(b []byte) (int, error) {
 		sugarLogger.Infoln("call ResponseWriter:", string(b))
 		return w.ResponseWriter.Write(b)
 	}
-	w.Header().Set("Content-Encoding", "gzip")
 	sugarLogger.Infoln("call gzip write:", string(b))
 	defer w.Writer.Close()
 	return w.Writer.Write(b)
@@ -137,12 +136,11 @@ func GetShort(w http.ResponseWriter, r *http.Request) {
 	// println("shorturl", shortURL, len(urls), urls[shortURL])
 	url, ok := urlStore.Read(regexp.MustCompile(`[^a-zA-Z0-9 ]+`).ReplaceAllString(shortURL, ""))
 	sugarLogger.Infoln("original url from store to header.Location", url)
+	w.Header().Add("content-type", "text/plain")
 	if ok {
-		w.Header().Add("content-type", "text/plain")
 		w.Header().Add("Location", url)
 		w.WriteHeader(http.StatusTemporaryRedirect)
 	} else {
-		w.Header().Add("content-type", "text/plain")
 		w.WriteHeader(http.StatusBadRequest)
 	}
 }
@@ -234,6 +232,9 @@ func PostJSON(w http.ResponseWriter, r *http.Request) {
 		handleError(respErr, w)
 	}
 	w.Header().Set("Content-Type", "application/json")
+	if strings.Contains(r.Header.Get("Accept-Encoding"), "gzip") {
+		w.Header().Set("Content-Encoding", "gzip")
+	}
 	w.WriteHeader(http.StatusCreated)
 
 	if writeToFile(shortURL, []byte(body.URL)) {
