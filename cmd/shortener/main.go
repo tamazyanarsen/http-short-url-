@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"http-short-url/cmd/shortener/config"
 	"http-short-url/cmd/shortener/handler"
 	"log"
@@ -11,6 +12,7 @@ import (
 
 func main() {
 	config.InitConfig()
+	flag.Parse()
 	handler.InitHandler()
 	r := chi.NewRouter()
 	r.Use(handler.GzipHandler)

@@ -20,5 +20,4 @@ func InitConfig() {
 	if fileLocation, exist := os.LookupEnv("FILE_STORAGE_PATH"); exist {
 		Config["f"] = &fileLocation
 	}
-	flag.Parse()
 }
