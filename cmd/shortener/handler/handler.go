@@ -100,6 +100,7 @@ func (w *gzipWriter) Write(b []byte) (int, error) {
 		sugarLogger.Infoln("call ResponseWriter:", string(b))
 		return w.ResponseWriter.Write(b)
 	}
+	w.Header().Set("Content-Encoding", "gzip")
 	sugarLogger.Infoln("call gzip write:", string(b))
 	defer w.Writer.Close()
 	return w.Writer.Write(b)
@@ -233,9 +234,6 @@ func PostJSON(w http.ResponseWriter, r *http.Request) {
 		handleError(respErr, w)
 	}
 	w.Header().Set("Content-Type", "application/json")
-	if strings.Contains(r.Header.Get("Accept-Encoding"), "gzip") {
-		w.Header().Set("Content-Encoding", "gzip")
-	}
 	w.WriteHeader(http.StatusCreated)
 
 	if writeToFile(shortURL, []byte(body.URL)) {
