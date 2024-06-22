@@ -109,6 +109,7 @@ func GzipHandler(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		newHandler := w
 		if strings.Contains(r.Header.Get("Accept-Encoding"), "gzip") {
+			w.Header().Set("Content-Encoding", "gzip")
 			sugarLogger.Infoln("Accept-Encoding contains gzip:", r.Header.Get("Accept-Encoding"))
 			newHandler = newGzipWriter(w)
 			// defer newHandler.(*gzipWriter).Writer.Close()
@@ -233,9 +234,6 @@ func PostJSON(w http.ResponseWriter, r *http.Request) {
 		handleError(respErr, w)
 	}
 	w.Header().Set("Content-Type", "application/json")
-	if strings.Contains(r.Header.Get("Accept-Encoding"), "gzip") {
-		w.Header().Set("Content-Encoding", "gzip")
-	}
 	w.WriteHeader(http.StatusCreated)
 
 	if writeToFile(shortURL, []byte(body.URL)) {
