@@ -35,7 +35,7 @@ func readFile(cons *Consumer) {
 	readFile(cons)
 }
 
-func InitHandler() {
+func InitHandler() error {
 	if logger, err := zap.NewDevelopment(); err == nil {
 		sugarLogger = *logger.Sugar()
 	}
@@ -45,10 +45,11 @@ func InitHandler() {
 	cons, consErr := NewConsumer(*config.Config["f"])
 	if consErr != nil {
 		sugarLogger.Errorln(consErr.Error())
-		return
+		return consErr
 	}
 	sugarLogger.Infoln("call readFile()")
 	readFile(cons)
+	return nil
 }
 
 type responseInfo struct {
@@ -154,21 +155,21 @@ func PostURL(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.Header().Set("Content-Type", "text/plain")
-	w.WriteHeader(http.StatusCreated)
 	shortURL, addr := shortName(body)
 	sugarLogger.Infoln("shortURL", shortURL)
 	sugarLogger.Infoln("addr", addr)
-	if writeToFile(shortURL, body) {
+	if writeToFile(shortURL, body) != nil {
 		return
 	}
+	w.WriteHeader(http.StatusCreated)
 	w.Write([]byte(addr + shortURL))
 }
 
-func writeToFile(shortURL string, body []byte) bool {
+func writeToFile(shortURL string, body []byte) error {
 	prod, prodErr := NewProducer(*config.Config["f"])
 	if prodErr != nil {
 		sugarLogger.Errorln(prodErr.Error())
-		return true
+		return prodErr
 	}
 	defer prod.Close()
 	writeErr := prod.WriteEvent(&FileData{
@@ -178,9 +179,9 @@ func writeToFile(shortURL string, body []byte) bool {
 	})
 	if writeErr != nil {
 		sugarLogger.Errorln(writeErr.Error())
-		return true
+		return writeErr
 	}
-	return false
+	return nil
 }
 
 func handleError(err error, w http.ResponseWriter) {
@@ -230,16 +231,17 @@ func PostJSON(w http.ResponseWriter, r *http.Request) {
 	response, respErr := json.Marshal(resp)
 	if respErr != nil {
 		handleError(respErr, w)
+		return
 	}
 	w.Header().Set("Content-Type", "application/json")
 	if strings.Contains(r.Header.Get("Accept-Encoding"), "gzip") {
 		w.Header().Set("Content-Encoding", "gzip")
 	}
-	w.WriteHeader(http.StatusCreated)
 
-	if writeToFile(shortURL, []byte(body.URL)) {
+	if writeToFile(shortURL, []byte(body.URL)) != nil {
 		return
 	}
+	w.WriteHeader(http.StatusCreated)
 
 	_, writeErr := w.Write([]byte(strings.TrimSuffix(string(response), "\n")))
 	if writeErr != nil {
