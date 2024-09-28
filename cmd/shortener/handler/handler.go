@@ -6,6 +6,8 @@ import (
 	"encoding/json"
 	"http-short-url/cmd/shortener/config"
 	"http-short-url/cmd/shortener/data"
+	file_handler "http-short-url/cmd/shortener/file-store"
+	"http-short-url/cmd/shortener/logger"
 	"io"
 	"net/http"
 	"regexp"
@@ -19,11 +21,11 @@ import (
 
 var urlStore data.Store
 
-var sugarLogger zap.SugaredLogger
+var sugarLogger zap.SugaredLogger = logger.Logger
 
 // var logger, err = zap.NewDevelopment()
 
-func readFile(cons *Consumer) {
+func readFile(cons *file_handler.Consumer) {
 	sugarLogger.Infoln("START READ FILE")
 	fileData, fileErr := cons.ReadEvent()
 	if fileErr != nil {
@@ -36,13 +38,11 @@ func readFile(cons *Consumer) {
 }
 
 func InitHandler() error {
-	if logger, err := zap.NewDevelopment(); err == nil {
-		sugarLogger = *logger.Sugar()
-	}
+	logger.InitLogger()
 	urlStore = new(data.URLStore)
 	sugarLogger.Infoln("INIT STORE", urlStore)
 
-	cons, consErr := NewConsumer(*config.Config["f"])
+	cons, consErr := file_handler.NewConsumer(*config.Config["f"])
 	if consErr != nil {
 		sugarLogger.Errorln(consErr.Error())
 		return consErr
@@ -135,10 +135,10 @@ func GetShort(w http.ResponseWriter, r *http.Request) {
 	sugarLogger.Info("START GetShort")
 	shortURL := chi.URLParam(r, "short")
 	// println("shorturl", shortURL, len(urls), urls[shortURL])
-	url, ok := urlStore.Read(regexp.MustCompile(`[^a-zA-Z0-9 ]+`).ReplaceAllString(shortURL, ""))
+	url, err := urlStore.Read(regexp.MustCompile(`[^a-zA-Z0-9 ]+`).ReplaceAllString(shortURL, ""))
 	sugarLogger.Infoln("original url from store to header.Location", url)
 	w.Header().Add("content-type", "text/plain")
-	if ok {
+	if err == nil {
 		w.Header().Add("Location", url)
 		w.WriteHeader(http.StatusTemporaryRedirect)
 	} else {
@@ -166,13 +166,13 @@ func PostURL(w http.ResponseWriter, r *http.Request) {
 }
 
 func writeToFile(shortURL string, body []byte) error {
-	prod, prodErr := NewProducer(*config.Config["f"])
+	prod, prodErr := file_handler.NewProducer(*config.Config["f"])
 	if prodErr != nil {
 		sugarLogger.Errorln(prodErr.Error())
 		return prodErr
 	}
 	defer prod.Close()
-	writeErr := prod.WriteEvent(&FileData{
+	writeErr := prod.WriteEvent(&file_handler.FileData{
 		UUID:        strconv.FormatInt(time.Now().Unix(), 10),
 		ShortURL:    shortURL,
 		OriginalURL: string(body),

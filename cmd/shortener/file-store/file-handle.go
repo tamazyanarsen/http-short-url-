@@ -1,7 +1,8 @@
-package handler
+package file_handler
 
 import (
 	"encoding/json"
+	"http-short-url/cmd/shortener/logger"
 	"os"
 )
 
@@ -34,7 +35,7 @@ func NewProducer(fileName string) (*Producer, error) {
 }
 
 func (p *Producer) WriteEvent(event *FileData) error {
-	sugarLogger.Infoln("write to file", event.OriginalURL, event.ShortURL)
+	logger.Logger.Infoln("write to file", event.OriginalURL, event.ShortURL)
 	return p.encoder.Encode(&event)
 }
 
@@ -57,6 +58,10 @@ func (c *Consumer) ReadEvent() (*FileData, error) {
 	}
 
 	return event, nil
+}
+
+func (cons *Consumer) ReadFile() ([]byte, error) {
+	return os.ReadFile(cons.file.Name())
 }
 
 func (p *Producer) Close() error {
