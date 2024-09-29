@@ -21,7 +21,7 @@ import (
 
 var urlStore data.Store
 
-var sugarLogger zap.SugaredLogger = logger.Logger
+var sugarLogger zap.SugaredLogger
 
 // var logger, err = zap.NewDevelopment()
 
@@ -39,16 +39,21 @@ func readFile(cons *file_handler.Consumer) {
 
 func InitHandler() error {
 	logger.InitLogger()
-	urlStore = new(data.URLStore)
+	sugarLogger = logger.Logger
 	sugarLogger.Infoln("INIT STORE", urlStore)
 
-	cons, consErr := file_handler.NewConsumer(*config.Config["f"])
-	if consErr != nil {
-		sugarLogger.Errorln(consErr.Error())
-		return consErr
+	if *config.Config["f"] == "" {
+		urlStore = new(data.URLStore)
+	} else {
+		cons, consErr := file_handler.NewConsumer(*config.Config["f"])
+		if consErr != nil {
+			sugarLogger.Errorln(consErr.Error())
+			return consErr
+		}
+		urlStore = new(data.FileStore)
+		sugarLogger.Infoln("call readFile()")
+		readFile(cons)
 	}
-	sugarLogger.Infoln("call readFile()")
-	readFile(cons)
 	return nil
 }
 
@@ -155,12 +160,16 @@ func PostURL(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.Header().Set("Content-Type", "text/plain")
-	shortURL, addr := shortName(body)
-	sugarLogger.Infoln("shortURL", shortURL)
-	sugarLogger.Infoln("addr", addr)
-	if writeToFile(shortURL, body) != nil {
+	shortURL, addr, writeErr := shortName(body)
+	if writeErr != nil {
+		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
+	sugarLogger.Infoln("shortURL", shortURL)
+	sugarLogger.Infoln("addr", addr)
+	// if writeToFile(shortURL, body) != nil {
+	// 	return
+	// }
 	w.WriteHeader(http.StatusCreated)
 	w.Write([]byte(addr + shortURL))
 }
@@ -194,14 +203,16 @@ func shortURL(originalURL []byte) string {
 	return regexp.MustCompile(`[^a-zA-Z0-9 ]+`).ReplaceAllString(short, "")
 }
 
-func shortName(originalURL []byte) (string, string) {
+func shortName(originalURL []byte) (string, string, error) {
 	shortURL := shortURL(originalURL)
-	urlStore.Write(shortURL, string(originalURL))
+	if err := urlStore.Write(shortURL, string(originalURL)); err != nil {
+		return "", "", err
+	}
 	addr := *config.Config["b"]
 	if addr[len(addr)-1:] != "/" {
 		addr += "/"
 	}
-	return shortURL, addr
+	return shortURL, addr, nil
 }
 
 func PostJSON(w http.ResponseWriter, r *http.Request) {
@@ -225,7 +236,11 @@ func PostJSON(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	sugarLogger.Infoln("body.URL", body.URL)
-	shortURL, addr := shortName([]byte(body.URL))
+	shortURL, addr, writeErrStore := shortName([]byte(body.URL))
+	if writeErrStore != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
 	resp.Result = addr + shortURL
 
 	response, respErr := json.Marshal(resp)
@@ -237,10 +252,9 @@ func PostJSON(w http.ResponseWriter, r *http.Request) {
 	if strings.Contains(r.Header.Get("Accept-Encoding"), "gzip") {
 		w.Header().Set("Content-Encoding", "gzip")
 	}
-
-	if writeToFile(shortURL, []byte(body.URL)) != nil {
-		return
-	}
+	// if writeToFile(shortURL, []byte(body.URL)) != nil {
+	// 	return
+	// }
 	w.WriteHeader(http.StatusCreated)
 
 	_, writeErr := w.Write([]byte(strings.TrimSuffix(string(response), "\n")))

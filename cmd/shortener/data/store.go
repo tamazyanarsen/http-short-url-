@@ -57,12 +57,13 @@ func (rec *FileStore) Write(key string, value string) error {
 }
 
 func (rec *FileStore) Read(key string) (string, error) {
-	// TODO дописать метод поиска в файле по ключу
-	// cons, err := file_handler.NewConsumer(*config.Config["f"])
-	// fileData := file_handler.FileData{}
-	// if data, err := cons.ReadFile(); err != nil {
-	// 	return json.Unmarshal(data, fileData)
-	// }
+	if cons, err := file_handler.NewConsumer(*config.Config["f"]); err == nil {
+		for fileData, err := cons.ReadEvent(); err == nil; fileData, err = cons.ReadEvent() {
+			if fileData.ShortURL == key {
+				return fileData.OriginalURL, nil
+			}
+		}
+	}
 
-	return "", nil
+	return "", errors.New("false")
 }
