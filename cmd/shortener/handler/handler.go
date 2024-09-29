@@ -6,7 +6,7 @@ import (
 	"encoding/json"
 	"http-short-url/cmd/shortener/config"
 	"http-short-url/cmd/shortener/data"
-	file_handler "http-short-url/cmd/shortener/file-store"
+	file_handler "http-short-url/cmd/shortener/fileHandler"
 	"http-short-url/cmd/shortener/logger"
 	"io"
 	"net/http"

@@ -3,7 +3,7 @@ package data
 import (
 	"errors"
 	"http-short-url/cmd/shortener/config"
-	file_handler "http-short-url/cmd/shortener/file-store"
+	file_handler "http-short-url/cmd/shortener/fileHandler"
 	"http-short-url/cmd/shortener/logger"
 	"strconv"
 	"sync"
