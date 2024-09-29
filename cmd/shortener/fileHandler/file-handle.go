@@ -1,4 +1,4 @@
-package fileHandler
+package filehandler
 
 import (
 	"encoding/json"
@@ -58,10 +58,6 @@ func (c *Consumer) ReadEvent() (*FileData, error) {
 	}
 
 	return event, nil
-}
-
-func (cons *Consumer) ReadFile() ([]byte, error) {
-	return os.ReadFile(cons.file.Name())
 }
 
 func (p *Producer) Close() error {

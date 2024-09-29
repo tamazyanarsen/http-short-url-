@@ -11,7 +11,6 @@ import (
 	"io"
 	"net/http"
 	"regexp"
-	"strconv"
 	"strings"
 	"time"
 
@@ -172,25 +171,6 @@ func PostURL(w http.ResponseWriter, r *http.Request) {
 	// }
 	w.WriteHeader(http.StatusCreated)
 	w.Write([]byte(addr + shortURL))
-}
-
-func writeToFile(shortURL string, body []byte) error {
-	prod, prodErr := file_handler.NewProducer(*config.Config["f"])
-	if prodErr != nil {
-		sugarLogger.Errorln(prodErr.Error())
-		return prodErr
-	}
-	defer prod.Close()
-	writeErr := prod.WriteEvent(&file_handler.FileData{
-		UUID:        strconv.FormatInt(time.Now().Unix(), 10),
-		ShortURL:    shortURL,
-		OriginalURL: string(body),
-	})
-	if writeErr != nil {
-		sugarLogger.Errorln(writeErr.Error())
-		return writeErr
-	}
-	return nil
 }
 
 func handleError(err error, w http.ResponseWriter) {
