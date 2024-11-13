@@ -15,7 +15,6 @@ func main() {
 	println("---------------CONFIG before flag.parse-------------------", *config.Config["a"], *config.Config["b"], *config.Config["f"])
 	flag.Parse()
 	println("---------------CONFIG after flag.parse-------------------", *config.Config["a"], *config.Config["b"], *config.Config["f"])
-	handler.InitHandler()
 	if err := handler.InitHandler(); err != nil {
 		log.Fatal(err)
 	}

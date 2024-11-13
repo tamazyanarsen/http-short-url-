@@ -27,6 +27,7 @@ var sugarLogger zap.SugaredLogger
 func readFile(cons *file_handler.Consumer) {
 	sugarLogger.Infoln("START READ FILE")
 	fileData, fileErr := cons.ReadEvent()
+	sugarLogger.Infoln(fileData, fileErr)
 	if fileErr != nil {
 		sugarLogger.Infoln(fileErr, "КОНЕЦ ФАЙЛА")
 		return
@@ -53,6 +54,7 @@ func InitHandler() error {
 		sugarLogger.Infoln("call readFile()")
 		readFile(cons)
 	}
+	sugarLogger.Infoln("INIT STORE", urlStore)
 	return nil
 }
 
