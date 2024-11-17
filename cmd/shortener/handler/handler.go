@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"http-short-url/cmd/shortener/config"
 	"http-short-url/cmd/shortener/data"
-	file_handler "http-short-url/cmd/shortener/fileHandler"
 	"http-short-url/cmd/shortener/logger"
 	"io"
 	"net/http"
@@ -22,20 +21,18 @@ var urlStore data.Store
 
 var sugarLogger zap.SugaredLogger
 
-// var logger, err = zap.NewDevelopment()
-
-func readFile(cons *file_handler.Consumer) {
-	sugarLogger.Infoln("START READ FILE")
-	fileData, fileErr := cons.ReadEvent()
-	sugarLogger.Infoln(fileData, fileErr)
-	if fileErr != nil {
-		sugarLogger.Infoln(fileErr, "КОНЕЦ ФАЙЛА")
-		return
-	}
-	sugarLogger.Infoln("WRITE TO STORE", urlStore)
-	urlStore.Write(fileData.ShortURL, fileData.OriginalURL)
-	readFile(cons)
-}
+// func readFile(cons *file_handler.Consumer) {
+// 	sugarLogger.Infoln("START READ FILE")
+// 	fileData, fileErr := cons.ReadEvent()
+// 	sugarLogger.Infoln(fileData, fileErr)
+// 	if fileErr != nil {
+// 		sugarLogger.Infoln(fileErr, "КОНЕЦ ФАЙЛА")
+// 		return
+// 	}
+// 	sugarLogger.Infoln("WRITE TO STORE", urlStore)
+// 	urlStore.Write(fileData.ShortURL, fileData.OriginalURL)
+// 	readFile(cons)
+// }
 
 func InitHandler() error {
 	logger.InitLogger()
@@ -45,14 +42,17 @@ func InitHandler() error {
 	if *config.Config["f"] == "" {
 		urlStore = new(data.URLStore)
 	} else {
-		cons, consErr := file_handler.NewConsumer(*config.Config["f"])
-		if consErr != nil {
-			sugarLogger.Errorln(consErr.Error())
-			return consErr
-		}
-		urlStore = new(data.FileStore)
-		sugarLogger.Infoln("call readFile()")
-		readFile(cons)
+		// cons, consErr := file_handler.NewConsumer(*config.Config["f"])
+		// if consErr != nil {
+		// 	sugarLogger.Errorln(consErr.Error())
+		// 	return consErr
+		// }
+		// urlStore = new(data.FileStore)
+		// sugarLogger.Infoln("call readFile()")
+		// readFile(cons)
+		fileStore := new(data.FileStore)
+		fileStore.InitMapStore()
+		urlStore = fileStore
 	}
 	sugarLogger.Infoln("INIT STORE", urlStore)
 	return nil

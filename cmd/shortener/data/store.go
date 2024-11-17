@@ -35,9 +35,26 @@ type Store interface {
 }
 
 type FileStore struct {
+	urlList sync.Map
+}
+
+func (rec *FileStore) InitMapStore() error {
+	cons, consErr := file_handler.NewConsumer(*config.Config["f"])
+	if consErr != nil {
+		return consErr
+	}
+
+	data, dataErr := cons.ReadEvent()
+	if dataErr != nil {
+		return dataErr
+	}
+
+	rec.urlList.Store(data.ShortURL, data.OriginalURL)
+	return nil
 }
 
 func (rec *FileStore) Write(key string, value string) error {
+	rec.urlList.Store(key, value)
 	prod, prodErr := file_handler.NewProducer(*config.Config["f"])
 	if prodErr != nil {
 		logger.Logger.Errorln(prodErr.Error())
@@ -57,8 +74,10 @@ func (rec *FileStore) Write(key string, value string) error {
 }
 
 func (rec *FileStore) Read(key string) (string, error) {
-	if cons, err := file_handler.NewConsumer(*config.Config["f"]); err == nil {
-		for fileData, err := cons.ReadEvent(); err == nil; fileData, err = cons.ReadEvent() {
+	if value, ok := rec.urlList.Load(key); ok {
+		return value.(string), nil
+	} else if cons, consErr := file_handler.NewConsumer(*config.Config["f"]); consErr == nil {
+		for fileData, consErr := cons.ReadEvent(); consErr == nil; fileData, consErr = cons.ReadEvent() {
 			if fileData.ShortURL == key {
 				return fileData.OriginalURL, nil
 			}
