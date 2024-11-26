@@ -21,19 +21,6 @@ var urlStore data.Store
 
 var sugarLogger zap.SugaredLogger
 
-// func readFile(cons *file_handler.Consumer) {
-// 	sugarLogger.Infoln("START READ FILE")
-// 	fileData, fileErr := cons.ReadEvent()
-// 	sugarLogger.Infoln(fileData, fileErr)
-// 	if fileErr != nil {
-// 		sugarLogger.Infoln(fileErr, "КОНЕЦ ФАЙЛА")
-// 		return
-// 	}
-// 	sugarLogger.Infoln("WRITE TO STORE", urlStore)
-// 	urlStore.Write(fileData.ShortURL, fileData.OriginalURL)
-// 	readFile(cons)
-// }
-
 func InitHandler() error {
 	logger.InitLogger()
 	sugarLogger = logger.Logger
@@ -42,16 +29,10 @@ func InitHandler() error {
 	if *config.Config["f"] == "" {
 		urlStore = new(data.URLStore)
 	} else {
-		// cons, consErr := file_handler.NewConsumer(*config.Config["f"])
-		// if consErr != nil {
-		// 	sugarLogger.Errorln(consErr.Error())
-		// 	return consErr
-		// }
-		// urlStore = new(data.FileStore)
-		// sugarLogger.Infoln("call readFile()")
-		// readFile(cons)
 		fileStore := new(data.FileStore)
-		fileStore.InitMapStore()
+		if initStoreErr := fileStore.InitMapStore(); initStoreErr != nil {
+			return initStoreErr
+		}
 		urlStore = fileStore
 	}
 	sugarLogger.Infoln("INIT STORE", urlStore)
@@ -133,7 +114,7 @@ func GzipHandler(next http.Handler) http.Handler {
 		}
 
 		next.ServeHTTP(newHandler, r)
-		//next(w, r)
+		// next(w, r)
 	})
 }
 
