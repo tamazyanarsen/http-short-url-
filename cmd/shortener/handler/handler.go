@@ -31,7 +31,8 @@ func InitHandler() error {
 	} else {
 		fileStore := new(data.FileStore)
 		if initStoreErr := fileStore.InitMapStore(); initStoreErr != nil {
-			return initStoreErr
+			urlStore = new(data.URLStore)
+			// return initStoreErr
 		}
 		urlStore = fileStore
 	}
