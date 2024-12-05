@@ -2,9 +2,9 @@ package data
 
 import (
 	"errors"
-	"http-short-url/cmd/shortener/config"
-	file_handler "http-short-url/cmd/shortener/fileHandler"
-	"http-short-url/cmd/shortener/logger"
+	"http-short-url/internal/config"
+	file_handler "http-short-url/internal/fileHandler"
+	"http-short-url/internal/logger"
 	"strconv"
 	"sync"
 	"time"

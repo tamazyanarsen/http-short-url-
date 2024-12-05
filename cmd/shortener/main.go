@@ -2,8 +2,8 @@ package main
 
 import (
 	"flag"
-	"http-short-url/cmd/shortener/config"
-	"http-short-url/cmd/shortener/handler"
+	"http-short-url/internal/config"
+	"http-short-url/internal/handler"
 	"log"
 	"net/http"
 

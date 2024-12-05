@@ -2,7 +2,7 @@ package filehandler
 
 import (
 	"encoding/json"
-	"http-short-url/cmd/shortener/logger"
+	"http-short-url/internal/logger"
 	"os"
 )
 

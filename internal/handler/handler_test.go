@@ -2,7 +2,7 @@ package handler
 
 import (
 	"bytes"
-	"http-short-url/cmd/shortener/config"
+	"http-short-url/internal/config"
 	"io"
 	"net/http"
 	"net/http/httptest"

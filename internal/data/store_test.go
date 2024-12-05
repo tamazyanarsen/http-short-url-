@@ -1,7 +1,7 @@
 package data
 
 import (
-	"http-short-url/cmd/shortener/logger"
+	"http-short-url/internal/logger"
 	"testing"
 
 	"github.com/stretchr/testify/require"
